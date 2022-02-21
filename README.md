@@ -18,8 +18,6 @@ If you need storage/persistence/Rails/etc support, I recommend the venerable [aa
 
 ## Installation
 
-> TODO: Not ready yet
-
 Add this line to your application's Gemfile:
 
 ```ruby
@@ -177,8 +175,6 @@ end
 ```
 
 ## Development
-
-> TODO: Not ready yet
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
