@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    simply_fsm (0.1.0)
+    simply_fsm (0.1.1)
 
 GEM
   remote: https://rubygems.org/

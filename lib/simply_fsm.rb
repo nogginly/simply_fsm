@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module SimplyFSM
-  VERSION = "0.1.0"
+require 'simply_fsm/version'
 
+module SimplyFSM
   def self.included(base)
     base.extend(ClassMethods)
   end
