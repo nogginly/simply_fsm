@@ -2,7 +2,7 @@
 
 `simply_fsm` is a bare-necessities finite state machine data-type for use with any Ruby class. I created `simply_fsm` because I wanted the minimal FSM data type that was easy to use and did everything I would expect from a core data type.
 
-If you need storage/persistence/Rails/etc support, I recommend the venerable [aasm](https://github.com/aasm/aasm)whose API was an inspiration for this gem.  
+If you need storage/persistence/Rails/etc support, I recommend [AASM](https://github.com/aasm/aasm) whose API was an inspiration for this gem.  
 
 **Contents**
 - [Installation](#installation)
