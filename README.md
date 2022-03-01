@@ -13,6 +13,7 @@ If you need storage/persistence/Rails/etc support, I recommend [AASM](https://gi
   - [Multiple state machines](#multiple-state-machines)
   - [Handle failed events](#handle-failed-events)
   - [Guarding events](#guarding-events)
+  - [Multiple transitions for an event](#multiple-transitions-for-an-event)
 - [Development](#development)
 - [Contributing](#contributing)
 - [License](#license)
@@ -49,15 +50,15 @@ class Job
     state :running
     state :cleaning
 
-    event :run, transition: { from: :sleeping, to: :running } do
+    event :run, transitions: { from: :sleeping, to: :running } do
       # executed when transition succeeds
     end
 
-    event :clean, transition: { from: :running, to: :cleaning } do
+    event :clean, transitions: { from: :running, to: :cleaning } do
       # do the cleaning since transition succeeded
     end
 
-    event :sleep, transition: { from: [:running, :cleaning], to: :sleeping }
+    event :sleep, transitions: { from: [:running, :cleaning], to: :sleeping }
   end
 end
 ```
@@ -88,16 +89,16 @@ class Player
     state :idling, initial: true
     state :walking
 
-    event :idle, transition: { from: :any, to: :idling }
-    event :walk, transition: { from: :idling, to: :walking }
+    event :idle, transitions: { from: :any, to: :idling }
+    event :walk, transitions: { from: :idling, to: :walking }
   end
 
   state_machine :action do
     state :ready, initial: true
     state :blocking
 
-    event :hold, transition: { from: :any, to: :ready }
-    event :block, transition: { from: :any, to: :blocking }
+    event :hold, transitions: { from: :any, to: :ready }
+    event :block, transitions: { from: :any, to: :blocking }
   end
 end
 ```
@@ -126,11 +127,11 @@ class JobWithErrors
     state :running
     state :cleaning
 
-    event :sleep, transition: { from: %i[running cleaning], to: :sleeping }
-    event :clean, transition: { from: :running, to: :cleaning }
+    event :sleep, transitions: { from: %i[running cleaning], to: :sleeping }
+    event :clean, transitions: { from: :running, to: :cleaning }
     event :run,
           fail: ->(_event) { raise RunError, "Cannot run" },
-          transition: { from: :sleeping, to: :running }
+          transitions: { from: :sleeping, to: :running }
   end
 
   def on_any_fail(event_name)
@@ -154,9 +155,9 @@ class AgilePlayer
     state :walking
     state :running
 
-    event :idle, transition: { from: :any, to: :idling }
-    event :walk, transition: { from: :any, to: :walking }
-    event :run, transition: { from: :any, to: :running }
+    event :idle, transitions: { from: :any, to: :idling }
+    event :walk, transitions: { from: :any, to: :walking }
+    event :run, transitions: { from: :any, to: :running }
   end
 
   state_machine :action do
@@ -164,14 +165,45 @@ class AgilePlayer
     state :jumping
     state :leaping
 
-    event :hold, transition: { from: :any, to: :ready }
+    event :hold, transitions: { from: :any, to: :ready }
     event :jump,
           guard: -> { !running? },
-          transition: { from: :ready, to: :jumping }
+          transitions: { from: :ready, to: :jumping }
     event :leap,
           guard: -> { running? },
           fail: ->(_event) { raise LeapError, "Cannot leap" },
-          transition: { from: :ready, to: :leaping }
+          transitions: { from: :ready, to: :leaping }
+  end
+end
+```
+### Multiple transitions for an event
+
+Sometimes a single event can transition to different end states based on different input states. In those situations you can specify an array of transitions. Consider the following example where the `hunt` event transitions to `walking` or `running` depending on some condition outside the state machine.
+
+```ruby
+class Critter
+  include SimplyFSM
+
+  def tired?
+    @ate_at <= 12.hours.ago || @slept_at <= 24.hours.ago
+  end
+
+  state_machine :activity do
+    state :sleeping, initial: true
+    state :running
+    state :walking
+    state :eating
+
+    event :eat, transitions: { to: :eating } do
+      @ate_at = DateTime.new
+    end
+    event :sleep, transitions: { from: :eating, to: :sleeping } do
+      @slept_at = DateTime.new
+    end
+    event :hunt, transitions: [
+      { when: -> { tired? }, to: :walking },
+      { to: :running }
+    ]
   end
 end
 ```

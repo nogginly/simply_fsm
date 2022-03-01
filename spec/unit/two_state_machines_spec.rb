@@ -7,16 +7,16 @@ class TwoStateMachines
     state :idling, initial: true
     state :walking
 
-    event :idle, transition: { from: :any, to: :idling }
-    event :walk, transition: { from: :idling, to: :walking }
+    event :idle, transitions: { from: :any, to: :idling }
+    event :walk, transitions: { from: :idling, to: :walking }
   end
 
   state_machine :action do
     state :ready, initial: true
     state :blocking
 
-    event :hold, transition: { from: :any, to: :ready }
-    event :block, transition: { from: :any, to: :blocking }
+    event :hold, transitions: { from: :any, to: :ready }
+    event :block, transitions: { from: :any, to: :blocking }
   end
 end
 

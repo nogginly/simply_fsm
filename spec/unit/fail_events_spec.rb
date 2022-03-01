@@ -11,11 +11,11 @@ class FailHandlingStateMachine
     state :running
     state :cleaning
 
-    event :sleep, transition: { from: %i[running cleaning], to: :sleeping }
-    event :clean, transition: { from: :running, to: :cleaning }
+    event :sleep, transitions: { from: %i[running cleaning], to: :sleeping }
+    event :clean, transitions: { from: :running, to: :cleaning }
     event :run,
           fail: ->(_event) { raise RunError, "Cannot run" },
-          transition: { from: :sleeping, to: :running }
+          transitions: { from: :sleeping, to: :running }
   end
 
   def on_any_fail(event_name)

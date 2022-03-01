@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class OneStateMachine
+class MultiTransitionStateMachine
   include SimplyFSM
 
   state_machine :activity do
@@ -9,12 +9,19 @@ class OneStateMachine
     state :cleaning
 
     event :run, transitions: { from: :sleeping, to: :running }
-    event :clean, transitions: { from: :running, to: :cleaning }
-    event :sleep, transitions: { from: %i[running cleaning], to: :sleeping }
+
+    event :clean, transitions: [
+      { from: :running, to: :cleaning }
+    ]
+
+    event :sleep, transitions: [
+      { from: :running, to: :sleeping },
+      { when: -> { cleaning? }, to: :sleeping }
+    ]
   end
 end
 
-RSpec.describe OneStateMachine do
+RSpec.describe MultiTransitionStateMachine do
   include_examples "state machine basics", :activity,
                    initial_state: :sleeping,
                    states: %i[sleeping running cleaning],

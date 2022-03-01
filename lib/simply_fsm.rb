@@ -9,6 +9,17 @@ module SimplyFSM
     base.extend(ClassMethods)
   end
 
+  def state_match?(from, current)
+    return true if from == :any
+    return from.include?(current) if from.is_a?(Array)
+
+    from == current
+  end
+
+  def cannot_transition?(from, cond, current)
+    (from && !state_match?(from, current)) || (cond && !instance_exec(&cond))
+  end
+
   ##
   # Defines the constructor for defining a state machine
   module ClassMethods
@@ -55,25 +66,70 @@ module SimplyFSM
     end
 
     ##
-    # Define an event by +event_name+ and
-    # - its +transition+ as a hash with a +from+ state or array of states and the +to+ state,
+    # Define an event by +event_name+
+    #
+    # - which +transitions+ as a hash with a +from+ state or array of states and the +to+ state,
     # - an optional +guard+ lambda which must return true for the transition to occur,
     # - an optional +fail+ lambda that is called when the transition fails (overrides top-level fail handler), and
     # - an optional do block that is called +after+ the transition succeeds
-    def event(event_name, transition:, guard: nil, fail: nil, &after)
-      return unless event_exists?(event_name) && transition
+    def event(event_name, transitions:, guard: nil, fail: nil, &after)
+      return unless event_exists?(event_name) && transitions
 
       @events << event_name
-      to = transition[:to]
       may_event_name = "may_#{event_name}?"
 
-      setup_may_event_method may_event_name, transition[:from], to, guard
+      if transitions.is_a?(Array)
+        setup_multi_transition_may_event_method transitions: transitions, guard: guard,
+                                                may_event_name: may_event_name
+        setup_multi_transition_event_method event_name,
+                                            transitions: transitions, guard: guard,
+                                            var_name: "@#{@name}", fail: fail || @fail_handler
+        return
+      end
+
+      to = transitions[:to]
+      setup_may_event_method may_event_name, transitions[:from] || :any, transitions[:when], guard
       setup_event_method event_name, var_name: "@#{@name}",
                                      may_event_name: may_event_name, to: to,
                                      fail: fail || @fail_handler, &after
     end
 
     private
+
+    def setup_multi_transition_may_event_method(transitions:, guard:, may_event_name:)
+      state_machine_name = @name
+
+      make_owner_method may_event_name, lambda {
+        if !guard || instance_exec(&guard)
+          current = send(state_machine_name)
+          # Check each transition, and first one that succeeds ends the scan
+          transitions.each do |t|
+            next if cannot_transition?(t[:from], t[:when], current)
+
+            return true
+          end
+        end
+        false
+      }
+    end
+
+    def setup_multi_transition_event_method(event_name, transitions:, guard:, var_name:, fail:)
+      state_machine_name = @name
+      make_owner_method event_name, lambda {
+        if !guard || instance_exec(&guard)
+          current = send(state_machine_name)
+          # Check each transition, and first one that succeeds ends the scan
+          transitions.each do |t|
+            next if cannot_transition?(t[:from], t[:when], current)
+
+            instance_variable_set(var_name, t[:to])
+            return true
+          end
+        end
+        instance_exec(&fail) if fail
+        false
+      }
+    end
 
     def event_exists?(event_name)
       event_name && !@events.include?(event_name)
@@ -99,21 +155,41 @@ module SimplyFSM
       make_owner_method event_name, method_lambda
     end
 
-    def setup_may_event_method(may_event_name, from, _to, guard)
+    def setup_may_event_method(may_event_name, from, cond, guard)
       state_machine_name = @name
       #
       # Instead of one "may_event?" method that checks all variations every time it's called, here we check
       # the event definition and define the most optimal lambda to ensure the check is as fast as possible
-      method_lambda = if from == :any && !guard
-                        -> { true } # unguarded transition from any state
-                      elsif from == :any
-                        guard # guarded transition from any state
-                      elsif !guard
-                        guardless_may_event_lambda(from, state_machine_name)
+      method_lambda = if from == :any
+                        from_any_may_event_lambda(guard, cond, state_machine_name)
                       else
-                        guarded_may_event_lambda(from, guard, state_machine_name)
+                        guarded_or_conditional_may_event_lambda(from, guard, cond, state_machine_name)
                       end
       make_owner_method may_event_name, method_lambda
+    end
+
+    def from_any_may_event_lambda(guard, cond, _state_machine_name)
+      if !guard && !cond
+        -> { true } # unguarded transition from any state
+      elsif !cond
+        guard # guarded transition from any state
+      elsif !guard
+        cond # conditional unguarded transition from any state
+      else
+        -> { instance_exec(&guard) && instance_exec(&cond) }
+      end
+    end
+
+    def guarded_or_conditional_may_event_lambda(from, guard, cond, state_machine_name)
+      if !guard && !cond
+        guardless_may_event_lambda(from, state_machine_name)
+      elsif !cond
+        guarded_may_event_lambda(from, guard, state_machine_name)
+      elsif !guard
+        guarded_may_event_lambda(from, cond, state_machine_name)
+      else
+        guarded_and_conditional_may_event_lambda(from, guard, cond, state_machine_name)
+      end
     end
 
     def guarded_may_event_lambda(from, guard, state_machine_name)
@@ -126,6 +202,20 @@ module SimplyFSM
         lambda { # guarded transition from one state
           current = send(state_machine_name)
           from == current && instance_exec(&guard)
+        }
+      end
+    end
+
+    def guarded_and_conditional_may_event_lambda(from, guard, cond, state_machine_name)
+      if from.is_a?(Array)
+        lambda { # guarded transition from choice of states
+          current = send(state_machine_name)
+          from.include?(current) && instance_exec(&guard) && instance_exec(&cond)
+        }
+      else
+        lambda { # guarded transition from one state
+          current = send(state_machine_name)
+          from == current && instance_exec(&guard) && instance_exec(&cond)
         }
       end
     end

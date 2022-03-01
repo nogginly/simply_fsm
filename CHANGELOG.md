@@ -2,6 +2,12 @@
 
 - None right now
 
+## [0.2.0] - 2022-03-01
+
+- *Breaks API* (sorry!)
+  - When declaring events in a state machine, use `transitions:` (as in "transitions from X to Y") instead of `transition:`
+- Added support for multiple transitions per event
+
 ## [0.1.2] - 2022-02-28
 
 - Cleaned up source with smaller clearer methods

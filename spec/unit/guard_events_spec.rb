@@ -10,9 +10,9 @@ class GuardingEvents
     state :walking
     state :running
 
-    event :idle, transition: { from: :any, to: :idling }
-    event :walk, transition: { from: :any, to: :walking }
-    event :run, transition: { from: :any, to: :running }
+    event :idle, transitions: { to: :idling }
+    event :walk, transitions: { from: :any, to: :walking }
+    event :run, transitions: { from: :any, to: :running }
   end
 
   state_machine :action do
@@ -20,14 +20,14 @@ class GuardingEvents
     state :jumping
     state :leaping
 
-    event :hold, transition: { from: :any, to: :ready }
+    event :hold, transitions: { to: :ready }
     event :jump,
           guard: -> { !running? },
-          transition: { from: :ready, to: :jumping }
+          transitions: { from: :ready, to: :jumping }
     event :leap,
           guard: -> { running? },
           fail: ->(_event) { raise LeapError, "Cannot leap" },
-          transition: { from: :ready, to: :leaping }
+          transitions: { when: -> { ready? }, to: :leaping }
   end
 end
 
