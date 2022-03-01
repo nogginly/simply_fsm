@@ -11,8 +11,12 @@ GEM
     parallel (1.21.0)
     parser (3.1.1.0)
       ast (~> 2.4.1)
+    psych (4.0.3)
+      stringio
     rainbow (3.1.1)
     rake (13.0.6)
+    rdoc (6.4.0)
+      psych (>= 4.0.0)
     regexp_parser (2.2.1)
     rexml (3.2.5)
     rspec (3.11.0)
@@ -40,6 +44,7 @@ GEM
     rubocop-ast (1.15.2)
       parser (>= 3.0.1.1)
     ruby-progressbar (1.11.0)
+    stringio (3.0.1)
     unicode-display_width (2.1.0)
 
 PLATFORMS
@@ -47,6 +52,7 @@ PLATFORMS
 
 DEPENDENCIES
   rake (~> 13.0)
+  rdoc
   rspec (~> 3.0)
   rubocop (~> 1.21)
   simply_fsm!

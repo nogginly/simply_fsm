@@ -26,5 +26,6 @@ Gem::Specification.new do |spec|
   # no deployment dependencies
 
   # development
+  spec.add_development_dependency "rdoc"
   spec.add_development_dependency "rspec", "~> 3.0"
 end

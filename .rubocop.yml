@@ -1,6 +1,10 @@
 AllCops:
   TargetRubyVersion: 2.7
 
+Naming/FileName:
+  Exclude:
+    - Rakefile
+
 Style/StringLiterals:
   Enabled: true
   EnforcedStyle: double_quotes
@@ -11,3 +15,13 @@ Style/StringLiteralsInInterpolation:
 
 Layout/LineLength:
   Max: 120
+
+Metrics/MethodLength:
+  Max: 16
+
+Metrics/ClassLength:
+  Max: 256
+  
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
