@@ -2,6 +2,10 @@
 
 - None right now
 
+## [0.2.1] - 2022-03-05
+
+- Fixed bug where named fail handlers were not called properly for multi-transition events.
+
 ## [0.2.0] - 2022-03-01
 
 - *Breaks API* (sorry!)

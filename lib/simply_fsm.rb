@@ -113,8 +113,19 @@ module SimplyFSM
       }
     end
 
+    def setup_fail_lambda_for(fail)
+      return unless fail
+
+      if fail.is_a?(String) || fail.is_a?(Symbol)
+        ->(event_name) { send(fail, event_name) }
+      else
+        ->(event_name) { instance_exec(event_name, &fail) }
+      end
+    end
+
     def setup_multi_transition_event_method(event_name, transitions:, guard:, var_name:, fail:)
       state_machine_name = @name
+      fail_lambda = setup_fail_lambda_for(fail)
       make_owner_method event_name, lambda {
         if !guard || instance_exec(&guard)
           current = send(state_machine_name)
@@ -126,7 +137,7 @@ module SimplyFSM
             return true
           end
         end
-        instance_exec(&fail) if fail
+        instance_exec(event_name, &fail_lambda) if fail_lambda
         false
       }
     end
@@ -136,20 +147,14 @@ module SimplyFSM
     end
 
     def setup_event_method(event_name, var_name:, may_event_name:, to:, fail:, &after)
+      fail_lambda = setup_fail_lambda_for(fail)
       method_lambda = lambda {
         if send(may_event_name)
           instance_variable_set(var_name, to)
           instance_exec(&after) if after
           return true
         end
-        # unable to satisfy pre-conditions for the event
-        if fail
-          if fail.is_a?(String) || fail.is_a?(Symbol)
-            send(fail, event_name)
-          else
-            instance_exec(event_name, &fail)
-          end
-        end
+        instance_exec(event_name, &fail_lambda) if fail_lambda
         false
       }
       make_owner_method event_name, method_lambda
