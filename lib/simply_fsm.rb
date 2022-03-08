@@ -119,7 +119,7 @@ module SimplyFSM
       if fail.is_a?(String) || fail.is_a?(Symbol)
         ->(event_name) { send(fail, event_name) }
       else
-        ->(event_name) { instance_exec(event_name, &fail) }
+        fail
       end
     end
 
