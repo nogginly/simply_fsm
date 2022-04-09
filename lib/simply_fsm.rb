@@ -2,31 +2,27 @@
 
 require "simply_fsm/version"
 
-##
-# Defines the `SimplyFSM` module
+#
+# Include *SimplyFSM* in a class to be able to defined state machines.
+#
 module SimplyFSM
+  #
+  # Provides a +state_machine+ for the including class.
   def self.included(base)
     base.extend(ClassMethods)
   end
 
-  def state_match?(from, current)
-    return true if from == :any
-    return from.include?(current) if from.is_a?(Array)
-
-    from == current
-  end
-
-  def cannot_transition?(from, cond, current)
-    (from && !state_match?(from, current)) || (cond && !instance_exec(&cond))
-  end
-
-  ##
+  #
   # Defines the constructor for defining a state machine
   module ClassMethods
-    ##
+    #
     # Declare a state machine called +name+ which can then be defined
-    # by a DSL defined by the methods of `StateMachine`, with the following +opts+:
-    # - an optional +fail+ lambda that is called when any event fails to transition)
+    # by a DSL defined by the methods of *StateMachine*.
+    #
+    # @param [String] name of the state machine.
+    # @param [Hash] opts to specify options such as:
+    #   - +fail+ lambda that is called with the event name when any event fails to transition
+    #
     def state_machine(name, opts = {}, &block)
       fsm = StateMachine.new(name, self, fail: opts[:fail])
       fsm.instance_eval(&block)
@@ -34,10 +30,19 @@ module SimplyFSM
   end
 
   ##
-  # The DSL for defining a state machine
+  # The DSL for defining a state machine. These methods are used within the declaration of a +state_machine+.
+  #
+  # @attr_reader [String] initial_state The initial state of the state machine
+  # @attr_reader [Array] states All the states of the state machine
+  # @attr_reader [Array] events All the events of the state machine
+  # @attr_reader [String] name
+  # @attr_reader [String] full_name The name of the owning class combined with the state machine's name
+  #
   class StateMachine
     attr_reader :initial_state, :states, :events, :name, :full_name
 
+    #
+    # @!visibility private
     def initialize(name, owner_class, fail: nil)
       @owner_class = owner_class
       @name = name.to_sym
@@ -50,8 +55,12 @@ module SimplyFSM
       setup_base_methods
     end
 
-    ##
+    #
     # Declare a supported +state_name+, and optionally specify one as the +initial+ state.
+    #
+    # @param [String] state_name
+    # @param [Boolean] initial to indicate if this is the initial state of the state machine
+    #
     def state(state_name, initial: false)
       return if state_name.nil? || @states.include?(state_name)
 
@@ -68,10 +77,11 @@ module SimplyFSM
     ##
     # Define an event by +event_name+
     #
-    # - which +transitions+ as a hash with a +from+ state or array of states and the +to+ state,
-    # - an optional +guard+ lambda which must return true for the transition to occur,
-    # - an optional +fail+ lambda that is called when the transition fails (overrides top-level fail handler), and
-    # - an optional do block that is called +after+ the transition succeeds
+    # @param [String] event_name
+    # @param [Hash,Array] transitions either one (Hash) or many (Array of Hashes) transitions +from+ one state +to+ another state.
+    # @param [Lambda] guard if specified must return +true+ before any transitions are attempted
+    # @param [Lambda] fail called with event name if specified when all the attempted transitions fail
+    # @yield when the transition attempt succeeds.
     def event(event_name, transitions:, guard: nil, fail: nil, &after)
       return unless event_exists?(event_name) && transitions
 
@@ -253,5 +263,18 @@ module SimplyFSM
     def make_owner_method(method_name, method_definition)
       @owner_class.define_method(method_name, method_definition)
     end
+  end
+
+  private
+
+  def state_match?(from, current)
+    return true if from == :any
+    return from.include?(current) if from.is_a?(Array)
+
+    from == current
+  end
+
+  def cannot_transition?(from, cond, current)
+    (from && !state_match?(from, current)) || (cond && !instance_exec(&cond))
   end
 end

@@ -27,5 +27,6 @@ Gem::Specification.new do |spec|
 
   # development
   spec.add_development_dependency "rdoc"
+  spec.add_development_dependency "yard"
   spec.add_development_dependency "rspec", "~> 3.0"
 end

@@ -2,6 +2,12 @@
 
 - None right now
 
+## [0.2.3] - 2022-04-09
+
+- Add `rake yard` to generate local documentation
+- Clean up API documentation
+- Privatise some internal methods
+
 ## [0.2.2] - 2022-03-08
 
 - Call `fail` lambda without wrapping it in a lambda

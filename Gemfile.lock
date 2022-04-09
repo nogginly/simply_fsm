@@ -46,6 +46,9 @@ GEM
     ruby-progressbar (1.11.0)
     stringio (3.0.1)
     unicode-display_width (2.1.0)
+    webrick (1.7.0)
+    yard (0.9.27)
+      webrick (~> 1.7.0)
 
 PLATFORMS
   ruby
@@ -56,6 +59,7 @@ DEPENDENCIES
   rspec (~> 3.0)
   rubocop (~> 1.21)
   simply_fsm!
+  yard
 
 BUNDLED WITH
    2.1.4
