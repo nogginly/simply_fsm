@@ -2,6 +2,11 @@
 
 - None right now
 
+## [0.3.0]
+
+- Moving main source under the `lib/simply_fsm` folder to remove `require` statement
+- Why? Eventually want to be able to use this with `mruby`
+
 ## [0.2.3] - 2022-04-09
 
 - Add `rake yard` to generate local documentation
